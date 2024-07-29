@@ -1,45 +1,32 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import ContactForm from "../ContactForm/ContactForm";
 import ContactList from "../ContactList/ContactList";
 import SearchBox from "../SearchBox/SearchBox";
-import initialContacts from "../contacts.json";
-// console.log(contacts);
+import { useDispatch, useSelector } from "react-redux";
+
+import { fetchContacts } from "../../redux/contactsOps";
+import { selectError, selectLoading } from "../../redux/contactsSlice";
+import Loading from "../Loading/Loading";
+import Error from "../Error/Error";
 
 export default function App() {
-  const [contacts, setContacts] = useState(() => {
-    const savedNumbers = window.localStorage.getItem("saved-contacts");
-    if (savedNumbers !== null) {
-      return JSON.parse(savedNumbers);
-    }
-    return initialContacts;
-  });
+  const dispatch = useDispatch();
+  const loading = useSelector(selectLoading);
+  const error = useSelector(selectError);
 
-  const [filter, setFilter] = useState("");
-
-  const addContact = (newContact) => {
-    setContacts((prevContacts) => [...prevContacts, newContact]);
-  };
   useEffect(() => {
-    window.localStorage.setItem("saved-contacts", JSON.stringify(contacts));
-  }, [contacts]);
-
-  const deleteNumber = (numberID) => {
-    // console.log(numberID);
-    setContacts((prevContacts) => {
-      return prevContacts.filter((contact) => contact.id !== numberID);
-    });
-  };
-
-  const visibleContacts = contacts.filter((contact) =>
-    contact.name.toLowerCase().includes(filter.toLowerCase())
-  );
+    const operation = fetchContacts();
+    dispatch(operation);
+  }, [dispatch]);
 
   return (
     <div>
       <h1>Phonebook</h1>
-      <ContactForm onAdd={addContact} />
-      <SearchBox value={filter} onFilter={setFilter} />
-      <ContactList initialContacts={visibleContacts} onDelete={deleteNumber} />
+      <ContactForm />
+      <SearchBox />
+      {loading && <Loading />}
+      {error && <Error />}
+      <ContactList />
     </div>
   );
 }
